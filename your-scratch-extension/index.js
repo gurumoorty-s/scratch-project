@@ -5,8 +5,11 @@ const TargetType = require('../../extension-support/target-type');
 class Scratch3YourExtension {
 
     constructor (runtime) {
-        // put any setup for your extension here
-    }
+        import('syllable')
+          .then((syllableModule) => {
+            this.syllable = syllableModule.syllable;
+          });
+      }
 
     /**
      * Returns the metadata about your extension.
@@ -24,8 +27,8 @@ class Scratch3YourExtension {
             color2: '#660066',
 
             // icons to display
-            blockIconURI: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAFCAAAAACyOJm3AAAAFklEQVQYV2P4DwMMEMgAI/+DEUIMBgAEWB7i7uidhAAAAABJRU5ErkJggg==',
-            menuIconURI: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAFCAAAAACyOJm3AAAAFklEQVQYV2P4DwMMEMgAI/+DEUIMBgAEWB7i7uidhAAAAABJRU5ErkJggg==',
+            //blockIconURI: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAFCAAAAACyOJm3AAAAFklEQVQYV2P4DwMMEMgAI/+DEUIMBgAEWB7i7uidhAAAAABJRU5ErkJggg==',
+            //menuIconURI: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAFCAAAAACyOJm3AAAAFklEQVQYV2P4DwMMEMgAI/+DEUIMBgAEWB7i7uidhAAAAABJRU5ErkJggg==',
 
             // your Scratch blocks
             blocks: [
@@ -41,7 +44,7 @@ class Scratch3YourExtension {
                     blockType: BlockType.REPORTER,
 
                     // label to display on the block
-                    text: 'My first block [MY_NUMBER] and [MY_STRING]',
+                    text: 'Title for the book with ISBN [BOOK_NUMBER]',
 
                     // true if this block should end a stack
                     terminal: false,
@@ -54,9 +57,9 @@ class Scratch3YourExtension {
 
                     // arguments used in the block
                     arguments: {
-                        MY_NUMBER: {
+                        BOOK_NUMBER: {
                             // default value before the user sets something
-                            defaultValue: 123,
+                            defaultValue: 1718500564,
 
                             // type/shape of the parameter - choose from:
                             //     ArgumentType.ANGLE - numeric value with an angle picker
@@ -66,8 +69,8 @@ class Scratch3YourExtension {
                             //     ArgumentType.STRING - text value
                             //     ArgumentType.NOTE - midi music value with a piano picker
                             type: ArgumentType.NUMBER
-                        },
-                        MY_STRING: {
+                        }//,
+                        /*MY_STRING: {
                             // default value before the user sets something
                             defaultValue: 'hello',
 
@@ -79,6 +82,27 @@ class Scratch3YourExtension {
                             //     ArgumentType.STRING - text value
                             //     ArgumentType.NOTE - midi music value with a piano picker
                             type: ArgumentType.STRING
+                        }*/
+                    }
+                },
+                {
+                    opcode: 'mysecondone',
+
+                    blockType: BlockType.REPORTER,
+
+                    text: 'Syllables in my [MY_TEXT]',
+
+                    terminal: false,
+
+                    filter: [ TargetType.SPRITE, TargetType.STAGE],
+
+                    arguments: {
+                        MY_TEXT: {
+                            defaultValue: 'Hello World',
+
+                            type: ArgumentType.STRING
+
+
                         }
                     }
                 }
@@ -91,10 +115,25 @@ class Scratch3YourExtension {
      * implementation of the block with the opcode that matches this name
      *  this will be called when the block is used
      */
-    myFirstBlock ({ MY_NUMBER, MY_STRING }) {
+    myFirstBlock ({ BOOK_NUMBER}) {
         // example implementation to return a string
-        return MY_STRING + ' : doubled would be ' + (MY_NUMBER * 2);
+        return fetch('https://openlibrary.org/isbn/' + BOOK_NUMBER + '.json')
+        .then((response) => {
+          if (response.ok) {
+            return response.json();
+          }
+          else {
+            return { title: 'Unknown' };
+          }
+        })
+        .then((bookinfo) => {
+          return bookinfo.title;
+        });
     }
+
+    mysecondone ({ MY_TEXT }) {
+        return this.syllable(MY_TEXT);
+      }
 }
 
 module.exports = Scratch3YourExtension;
